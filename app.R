@@ -40,6 +40,8 @@ data <- data %>%
 ui <- fluidPage(
     # Application title
     titlePanel("Virginia Department of Health Covid-19 Surveillance Data"),
+    helpText(tags$a(href = "https://www.vdh.virginia.gov/coronavirus/",
+                    "Source data")),
     
     # Sidebar
     sidebarLayout(
@@ -72,7 +74,7 @@ ui <- fluidPage(
                     inputId = "HealthDist1",
                     label = "Health Districts in Group 1",
                     choices = unique(data$`Health District`),
-                    multiple = TRUE, 
+                    multiple = TRUE,
                     "New River"
                 ),
                 conditionalPanel(
@@ -88,7 +90,7 @@ ui <- fluidPage(
                         inputId = "HealthDist2",
                         label = "Health Districts in Group 2",
                         choices = unique(data$`Health District`),
-                        multiple = TRUE, 
+                        multiple = TRUE,
                         "New River"
                     ),
                     conditionalPanel(
@@ -130,21 +132,136 @@ ui <- fluidPage(
             )
         ),
         
-        # Show a plot of the generated distribution
-        mainPanel(plotOutput("distPlot"))
+        #Show a plot of the generated distribution
+        mainPanel(
+            plotOutput("distPlot"),
+            downloadButton("downloadData", "Download data"), 
+            downloadButton("downloadPlot", "Download plot pdf")
+        )
     )
 )
 
 #### Server ####
 server <- function(input, output) {
-    output$distPlot <- renderPlot({
+        filtered_data <- reactive({
         if (input$sum != "Sum total") {
             data_plot <- data %>%
                 filter(`Health District` %in% input$HealthDist) %>%
                 filter(`Age Group` %in% input$AgeGroup) %>%
                 filter(wday(`Report Date`) == wday(today()))
+                    }
+        else {
+            ##### 1 Group ####
+            if (input$groups == 1) {
+                data_plot <- data %>%
+                    filter(`Health District` %in%
+                               c(input$HealthDist1)) %>%
+                    filter(`Age Group` %in%
+                               c(input$AgeGroup1)) %>%
+                    mutate(
+                        group = case_when(
+                            `Health District` %in% input$HealthDist1 &
+                                `Age Group` %in% input$AgeGroup1 ~
+                                paste(
+                                    paste(input$HealthDist1, collapse = ", "),
+                                    paste(input$AgeGroup1, collapse = ", "),
+                                    sep = " & "
+                                )
+                        )
+                    ) %>%
+                    group_by(`Report Date`, group) %>%
+                    summarise(`New Weekly Cases` =
+                                  sum(`New Weekly Cases`))
+            } else
+                ##### 2 Groups ####
+            if (input$groups == 2) {
+                data_plot <- data %>%
+                    filter(`Health District` %in%
+                               c(input$HealthDist1, input$HealthDist2)) %>%
+                    filter(`Age Group` %in%
+                               c(input$AgeGroup1, input$AgeGroup2)) %>%
+                    mutate(
+                        group = case_when(
+                            `Health District` %in% input$HealthDist1 &
+                                `Age Group` %in% input$AgeGroup1 ~
+                                paste(
+                                    paste(input$HealthDist1, collapse = ", "),
+                                    paste(input$AgeGroup1, collapse = ", "),
+                                    sep = " & "
+                                ),
+                            `Health District` %in% input$HealthDist2 &
+                                `Age Group` %in% input$AgeGroup2 ~
+                                paste(
+                                    paste(input$HealthDist2, collapse = ", "),
+                                    paste(input$AgeGroup2, collapse = ", "),
+                                    sep = " & "
+                                )
+                        )
+                    ) %>%
+                    group_by(`Report Date`, group) %>%
+                    summarise(`New Weekly Cases` =
+                                  sum(`New Weekly Cases`))
+            } else
+                ##### 3 Groups ####
+            if (input$groups == 3) {
+                data_plot <- data %>%
+                    filter(
+                        `Health District` %in%
+                            c(
+                                input$HealthDist1,
+                                input$HealthDist2,
+                                input$HealthDist3
+                            )
+                    ) %>%
+                    filter(
+                        `Age Group` %in%
+                            c(
+                                input$AgeGroup1,
+                                input$AgeGroup2,
+                                input$AgeGroup3
+                            )
+                    ) %>%
+                    mutate(
+                        group = case_when(
+                            `Health District` %in% input$HealthDist1 &
+                                `Age Group` %in% input$AgeGroup1 ~
+                                paste(
+                                    paste(input$HealthDist1, collapse = ", "),
+                                    paste(input$AgeGroup1, collapse = ", "),
+                                    sep = " & "
+                                ),
+                            `Health District` %in% input$HealthDist2 &
+                                `Age Group` %in% input$AgeGroup2 ~
+                                paste(
+                                    paste(input$HealthDist2, collapse = ", "),
+                                    paste(input$AgeGroup2, collapse = ", "),
+                                    sep = " & "
+                                ),
+                            `Health District` %in% input$HealthDist3 &
+                                `Age Group` %in% input$AgeGroup3 ~
+                                paste(
+                                    paste(input$HealthDist3, collapse = ", "),
+                                    paste(input$AgeGroup3, collapse = ", "),
+                                    sep = " & "
+                                )
+                        )
+                    ) %>%
+                    group_by(`Report Date`, group) %>%
+                    summarise(`New Weekly Cases` =
+                                  sum(`New Weekly Cases`))
+            }
+        }
+    })
+    
+    output$downloadData <- downloadHandler(
+        filename = "VDH-Covid-data-subset.csv",
+        content = function(file) {
+            write.csv(filtered_data(), file, row.names = FALSE)})
+    
+    distPlot <- reactive({
+        if (input$sum != "Sum total") {
             ggplot(
-                data = data_plot,
+                data = filtered_data(),
                 mapping = aes(
                     x = `Report Date`,
                     y = `New Weekly Cases`,
@@ -156,79 +273,9 @@ server <- function(input, output) {
             ) +
                 geom_line(alpha = 0.7) +
                 scale_color_viridis_d(option = "C", end = 0.9)
-        }
-        else {
-            ##### 1 Group ####
-            if (input$groups == 1) {
-                data_plot <- data %>%
-                    filter(`Health District` %in% 
-                               c(input$HealthDist1)) %>%
-                    filter(`Age Group` %in% 
-                               c(input$AgeGroup1)) %>%
-                    mutate(group = case_when(
-                        `Health District` %in% input$HealthDist1 &
-                            `Age Group` %in% input$AgeGroup1 ~ 
-                            paste(paste(input$HealthDist1, collapse = ", " ), 
-                                  paste(input$AgeGroup1, collapse = ", " ), 
-                                  sep = " & ")
-                        )) %>%
-                    group_by(`Report Date`, group) %>%
-                    summarise(`New Weekly Cases` = 
-                                  sum(`New Weekly Cases`))
-            } else
-                ##### 2 Groups ####
-                if (input$groups == 2) {
-                    data_plot <- data %>%
-                        filter(`Health District` %in% 
-                                   c(input$HealthDist1, input$HealthDist2)) %>%
-                        filter(`Age Group` %in% 
-                                   c(input$AgeGroup1, input$AgeGroup2)) %>%
-                        mutate(group = case_when(
-                            `Health District` %in% input$HealthDist1 &
-                                `Age Group` %in% input$AgeGroup1 ~ 
-                                paste(paste(input$HealthDist1, collapse = ", " ), 
-                                      paste(input$AgeGroup1, collapse = ", " ), 
-                                      sep = " & "),
-                            `Health District` %in% input$HealthDist2 &
-                                `Age Group` %in% input$AgeGroup2 ~ 
-                                paste(paste(input$HealthDist2, collapse = ", " ), 
-                                      paste(input$AgeGroup2, collapse = ", " ), 
-                                      sep = " & "))) %>%
-                        group_by(`Report Date`, group) %>%
-                        summarise(`New Weekly Cases` = 
-                                      sum(`New Weekly Cases`))
-                } else 
-            ##### 3 Groups ####
-            if (input$groups == 3) {
-                data_plot <- data %>%
-                    filter(`Health District` %in% 
-                               c(input$HealthDist1, input$HealthDist2, 
-                                 input$HealthDist3)) %>%
-                    filter(`Age Group` %in% 
-                               c(input$AgeGroup1, input$AgeGroup2, 
-                                 input$AgeGroup3)) %>%
-                    mutate(group = case_when(
-                        `Health District` %in% input$HealthDist1 &
-                            `Age Group` %in% input$AgeGroup1 ~ 
-                            paste(paste(input$HealthDist1, collapse = ", " ), 
-                                  paste(input$AgeGroup1, collapse = ", " ), 
-                                  sep = " & "),
-                        `Health District` %in% input$HealthDist2 &
-                            `Age Group` %in% input$AgeGroup2 ~ 
-                            paste(paste(input$HealthDist2, collapse = ", " ), 
-                                  paste(input$AgeGroup2, collapse = ", " ), 
-                                  sep = " & "),
-                        `Health District` %in% input$HealthDist3 &
-                            `Age Group` %in% input$AgeGroup3 ~ 
-                            paste(paste(input$HealthDist3, collapse = ", " ), 
-                                  paste(input$AgeGroup3, collapse = ", " ), 
-                                  sep = " & "))) %>%
-                    group_by(`Report Date`, group) %>%
-                    summarise(`New Weekly Cases` = 
-                                  sum(`New Weekly Cases`))
-            }
+        } else {
             ggplot(
-                data = data_plot,
+                data = filtered_data(),
                 mapping = aes(
                     x = `Report Date`,
                     y = `New Weekly Cases`,
@@ -236,13 +283,22 @@ server <- function(input, output) {
                     group = group
                 )
             ) +
-                geom_line(alpha = 0.7) +
-                scale_color_viridis_d(option = "C", end = 0.7) + 
-                theme(legend.position = "top")
+            geom_line(alpha = 0.7) +
+            scale_color_viridis_d(option = "C", end = 0.7) +
+            theme(legend.position = "top")
         }
-        
     })
+    
+    output$distPlot <- renderPlot(
+        print(distPlot())
+    )
+    
+    output$downloadPlot <- downloadHandler(
+        filename = "VDH-Covid-data-subset-plot.pdf",
+        content = function(file) {
+            ggsave(file, distPlot(), device = "pdf")})
 }
+
 
 # Run the application
 shinyApp(ui = ui, server = server)
