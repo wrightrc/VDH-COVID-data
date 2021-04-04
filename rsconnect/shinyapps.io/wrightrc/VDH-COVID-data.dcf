@@ -5,8 +5,8 @@ account: wrightrc
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3906952
-bundleId: 4430229
+bundleId: 4430357
 url: https://wrightrc.shinyapps.io/VDH-COVID-data/
-when: 1617550599.75637
+when: 1617553766.35485
 asMultiple: FALSE
 asStatic: FALSE

@@ -20,8 +20,8 @@ data <-
 data$`Health District` <- replace(
     x = data$`Health District`,
     list = which(data$`Health District` == "Thomas Jefferson"),
-    values =  "Blue Ridge"
-)
+    values =  "Blue Ridge")
+
 data <- data %>%
     mutate(`Report Date` = mdy(`Report Date`)) %>%
     arrange(`Report Date`) %>%
@@ -40,17 +40,25 @@ data <- data %>%
 ui <- fluidPage(
     # Application title
     titlePanel("Virginia Department of Health Covid-19 Surveillance Data"),
-    helpText(tags$a(href = "https://www.vdh.virginia.gov/coronavirus/",
-                    "Using the most recently available data from VDH, here.")),
+    helpText(
+        tags$a(href = "https://www.vdh.virginia.gov/coronavirus/",
+               "Using the most recently available data from VDH, here.")
+    ),
     
     # Sidebar
     sidebarLayout(
         sidebarPanel(
-            sliderInput(inputId = "DateRange", label = "Select date range to view", min = min(data$`Report Date`), max = max(data$`Report Date`), 
-                        value = c(min(data$`Report Date`), max(data$`Report Date`))),
+            sliderInput(
+                inputId = "DateRange",
+                label = "Select date range to view",
+                min = min(data$`Report Date`),
+                max = max(data$`Report Date`),
+                value = c(min(data$`Report Date`), max(data$`Report Date`))
+            ),
             radioButtons(
                 inputId = "sum",
-                label = "Plot age groups and health districts individually or combined totals for selected groups?",
+                label = "Plot age groups and health districts individually or 
+                    combined totals for selected groups?",
                 choices = c("Plot individually", "Sum total"),
                 selected = "Plot individually",
                 inline = TRUE
@@ -76,7 +84,7 @@ ui <- fluidPage(
                 selectInput(
                     inputId = "HealthDist1",
                     label = "Health Districts in Group 1",
-                    choices = unique(data$`Health District`),
+                    choices = sort(unique(data$`Health District`)),
                     multiple = TRUE,
                     "New River"
                 ),
@@ -92,7 +100,7 @@ ui <- fluidPage(
                     selectInput(
                         inputId = "HealthDist2",
                         label = "Health Districts in Group 2",
-                        choices = unique(data$`Health District`),
+                        choices = sort(unique(data$`Health District`)),
                         multiple = TRUE,
                         "New River"
                     ),
@@ -108,7 +116,7 @@ ui <- fluidPage(
                         selectInput(
                             inputId = "HealthDist3",
                             label = "Health Districts in Group 3",
-                            choices = unique(data$`Health District`),
+                            choices = sort(unique(data$`Health District`)),
                             multiple = TRUE,
                             "New River"
                         )
@@ -128,7 +136,7 @@ ui <- fluidPage(
                 selectInput(
                     inputId = "HealthDist",
                     label = "Health District",
-                    choices = unique(data$`Health District`),
+                    choices = sort(unique(data$`Health District`)),
                     multiple = TRUE,
                     "New River"
                 )
@@ -138,7 +146,7 @@ ui <- fluidPage(
         #Show a plot of the generated distribution
         mainPanel(
             plotOutput("distPlot"),
-            downloadButton("downloadData", "Download data"), 
+            downloadButton("downloadData", "Download data"),
             downloadButton("downloadPlot", "Download plot pdf")
         )
     )
@@ -146,17 +154,17 @@ ui <- fluidPage(
 
 #### Server ####
 server <- function(input, output) {
-        filtered_data <- reactive({
+    filtered_data <- reactive({
         data_plot <- data %>%
-            filter(`Report Date` %within% 
-                       interval(input$DateRange[[1]], 
-                                input$DateRange[[2]])) 
+            filter(`Report Date` %within%
+                       interval(input$DateRange[[1]],
+                                input$DateRange[[2]]))
         if (input$sum != "Sum total") {
             data_plot <- data_plot %>%
                 filter(`Health District` %in% input$HealthDist) %>%
                 filter(`Age Group` %in% input$AgeGroup) %>%
                 filter(wday(`Report Date`) == wday(today()))
-                    }
+        }
         else {
             ##### 1 Group ####
             if (input$groups == 1) {
@@ -263,8 +271,29 @@ server <- function(input, output) {
     output$downloadData <- downloadHandler(
         filename = "VDH-Covid-data-subset.csv",
         content = function(file) {
-            write.csv(filtered_data(), file, row.names = FALSE)})
-    
+            if (input$sum == "Sum total") {
+                write.csv(
+                    filtered_data() %>%
+                        pivot_wider(names_from = group,
+                                    values_from = `New Weekly Cases`, 
+                                    values_fill = 0),
+                    file,
+                    row.names = FALSE
+                )
+            } else
+                write.csv(
+                    filtered_data() %>%
+                        pivot_wider(
+                            names_from = c(`Health District`, `Age Group`),
+                            values_from = `New Weekly Cases`,
+                            names_glue = "{`Health District`}_{`Age Group`}", 
+                            values_fill = 0)
+                        ,
+                    file,
+                    row.names = FALSE
+                )
+        }
+    )
     distPlot <- reactive({
         if (input$sum != "Sum total") {
             ggplot(
@@ -279,11 +308,11 @@ server <- function(input, output) {
                 )
             ) +
                 geom_line(alpha = 0.7) +
-                scale_color_viridis_d(option = "C", end = 0.7) + 
+                scale_color_viridis_d(option = "C", end = 0.7) +
                 scale_x_date(date_breaks = "months", date_labels = "%b %y") +
-                expand_limits(y = 0) + 
+                expand_limits(y = 0) +
                 theme_classic()
-                
+            
         } else {
             ggplot(
                 data = filtered_data(),
@@ -294,22 +323,22 @@ server <- function(input, output) {
                     group = group
                 )
             ) +
-            geom_line(alpha = 0.7) +
-            scale_color_viridis_d(option = "C", end = 0.7) +
-            theme(legend.position = "top") + 
-                scale_x_date(date_breaks = "months", date_labels = "%b %y") + 
-                theme_classic()
+                geom_line(alpha = 0.7) +
+                scale_color_viridis_d(option = "C", end = 0.7) +
+                scale_x_date(date_breaks = "months", date_labels = "%b %y") +
+                theme_classic() +
+                theme(legend.position = "top")
         }
     })
     
-    output$distPlot <- renderPlot(
-        print(distPlot())
-    )
+    output$distPlot <- renderPlot(print(distPlot()))
     
     output$downloadPlot <- downloadHandler(
         filename = "VDH-Covid-data-subset-plot.pdf",
         content = function(file) {
-            ggsave(file, distPlot(), device = "pdf")})
+            ggsave(file, distPlot(), device = "pdf")
+        }
+    )
 }
 
 
