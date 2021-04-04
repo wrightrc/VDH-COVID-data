@@ -276,7 +276,8 @@ server <- function(input, output) {
                     filtered_data() %>%
                         pivot_wider(names_from = group,
                                     values_from = `New Weekly Cases`, 
-                                    values_fill = 0),
+                                    values_fill = 0, 
+                                    names_prefix = "New Weekly Cases "),
                     file,
                     row.names = FALSE
                 )
@@ -287,7 +288,8 @@ server <- function(input, output) {
                             names_from = c(`Health District`, `Age Group`),
                             values_from = `New Weekly Cases`,
                             names_glue = "{`Health District`}_{`Age Group`}", 
-                            values_fill = 0)
+                            values_fill = 0, 
+                            names_prefix = "New Weekly Cases ")
                         ,
                     file,
                     row.names = FALSE
