@@ -277,20 +277,22 @@ server <- function(input, output) {
                         pivot_wider(names_from = group,
                                     values_from = `New Weekly Cases`, 
                                     values_fill = 0, 
-                                    names_prefix = "New Weekly Cases "),
+                                    names_prefix = "New Weekly Cases in "),
                     file,
                     row.names = FALSE
                 )
             } else
                 write.csv(
                     filtered_data() %>%
+                        select(-c(`Number of Hospitalizations`, 
+                                  `New Daily Cases`, 
+                                  `Number of Cases`, 
+                                  `Number of Deaths`)) %>%
                         pivot_wider(
                             names_from = c(`Health District`, `Age Group`),
                             values_from = `New Weekly Cases`,
-                            names_glue = "{`Health District`}_{`Age Group`}", 
-                            values_fill = 0, 
-                            names_prefix = "New Weekly Cases ")
-                        ,
+                            names_glue = "New Weekly Cases in {`Health District`} & {`Age Group`}", 
+                            values_fill = 0),
                     file,
                     row.names = FALSE
                 )
