@@ -10,6 +10,7 @@
 library(shiny)
 library(tidyverse)
 library(lubridate)
+library(ggthemes)
 
 # Get data
 data <-
@@ -154,11 +155,13 @@ ui <- fluidPage(
 
 #### Server ####
 server <- function(input, output) {
+    ##filter data
     filtered_data <- reactive({
         data_plot <- data %>%
             filter(`Report Date` %within%
                        interval(input$DateRange[[1]],
                                 input$DateRange[[2]]))
+        ##### Plot Individual ####
         if (input$sum != "Sum total") {
             data_plot <- data_plot %>%
                 filter(`Health District` %in% input$HealthDist) %>%
@@ -166,6 +169,7 @@ server <- function(input, output) {
                 filter(wday(`Report Date`) == wday(today()))
         }
         else {
+    #### Sum total ####
             ##### 1 Group ####
             if (input$groups == 1) {
                 data_plot <- data_plot %>%
@@ -268,6 +272,7 @@ server <- function(input, output) {
         }
     })
     
+#### Download ####
     output$downloadData <- downloadHandler(
         filename = "VDH-Covid-data-subset.csv",
         content = function(file) {
@@ -298,9 +303,10 @@ server <- function(input, output) {
                 )
         }
     )
+    #### Plot ####
     distPlot <- reactive({
         if (input$sum != "Sum total") {
-            ggplot(
+            p <-ggplot(
                 data = filtered_data(),
                 mapping = aes(
                     x = `Report Date`,
@@ -310,15 +316,14 @@ server <- function(input, output) {
                     group = interaction(`Age Group`,
                                         `Health District`)
                 )
-            ) +
-                geom_line(alpha = 0.7) +
-                scale_color_viridis_d(option = "C", end = 0.7) +
-                scale_x_date(date_breaks = "months", date_labels = "%b %y") +
-                expand_limits(y = 0) +
-                theme_classic()
+            ) 
             
         } else {
-            ggplot(
+
+# Formatting --------------------------------------------------------------
+
+            
+            p <- ggplot(
                 data = filtered_data(),
                 mapping = aes(
                     x = `Report Date`,
@@ -326,13 +331,16 @@ server <- function(input, output) {
                     color = group,
                     group = group
                 )
-            ) +
-                geom_line(alpha = 0.7) +
-                scale_color_viridis_d(option = "C", end = 0.7) +
-                scale_x_date(date_breaks = "months", date_labels = "%b %y") +
-                theme_classic() +
-                theme(legend.position = "top")
+            ) 
         }
+        p + 
+            geom_line(alpha = 0.7, size = 2) +
+            scale_color_brewer(palette = "Paired") +
+            scale_x_date(date_breaks = "months", date_labels = "%b %y") +
+            expand_limits(y = 0) +
+            theme_excel_new(base_size = 16) + 
+            theme(axis.title.x = element_text(), axis.title.y = element_text())
+        
     })
     
     output$distPlot <- renderPlot(print(distPlot()))
