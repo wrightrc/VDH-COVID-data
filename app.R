@@ -42,7 +42,7 @@ data <- data %>%
 #### UI ####
 ui <- fluidPage(
     # Application title
-    titlePanel("Virginia Department of Health Covid-19 Surveillance Data"),
+    titlePanel("Virginia Department of Health COVID-19 Surveillance Data"),
     helpText("Using the most recently available data from VDH.",
         tags$a(href = "https://www.vdh.virginia.gov/coronavirus/",
                "Raw data is available here."),
@@ -304,7 +304,7 @@ server <- function(input, output) {
     
     #### Download ####
     output$downloadData <- downloadHandler(
-        filename = "VDH-Covid-data-subset.csv",
+        filename = "VDH-COVID-data-subset.csv",
         content = function(file) {
             if (input$sum == "Sum total") {
                 write.csv(
@@ -383,7 +383,7 @@ server <- function(input, output) {
     output$distPlot <- renderPlot(print(distPlot()))
     
     output$downloadPlot <- downloadHandler(
-        filename = "VDH-Covid-data-subset-plot.pdf",
+        filename = "VDH-COVID-data-subset-plot.pdf",
         content = function(file) {
             ggsave(file, distPlot(), device = "pdf")
         }
