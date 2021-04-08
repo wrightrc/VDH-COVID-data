@@ -11,6 +11,7 @@ library(shiny)
 library(tidyverse)
 library(lubridate)
 library(ggthemes)
+library(fontawesome)
 
 # Get data
 data <-
@@ -21,7 +22,8 @@ data <-
 data$`Health District` <- replace(
     x = data$`Health District`,
     list = which(data$`Health District` == "Thomas Jefferson"),
-    values =  "Blue Ridge")
+    values =  "Blue Ridge"
+)
 
 data <- data %>%
     mutate(`Report Date` = mdy(`Report Date`)) %>%
@@ -43,11 +45,13 @@ ui <- fluidPage(
     titlePanel("Virginia Department of Health Covid-19 Surveillance Data"),
     helpText(
         tags$a(href = "https://www.vdh.virginia.gov/coronavirus/",
-               "Using the most recently available data from VDH, here.")
+               "Using the most recently available data from VDH, here."),
+        p(
+            "Authors are not affiliated with Virginia Department of Health. See important notes below about this data."
+        )
     ),
-    
-    # Sidebar
     sidebarLayout(
+        # Sidebar -----------------------------------------------------------------
         sidebarPanel(
             sliderInput(
                 inputId = "DateRange",
@@ -58,13 +62,12 @@ ui <- fluidPage(
             ),
             radioButtons(
                 inputId = "sum",
-                label = "Plot age groups and health districts individually or 
-                    combined totals for selected groups?",
+                label = "Plot age groups and health districts individually or
+                    sum totals for selected groups:",
                 choices = c("Plot individually", "Sum total"),
                 selected = "Plot individually",
                 inline = TRUE
             ),
-            
             ##### Sum total ####
             conditionalPanel(
                 condition = "input.sum == `Sum total`",
@@ -144,14 +147,41 @@ ui <- fluidPage(
             )
         ),
         
+        # Main Panel --------------------------------------------------------------
+        
+        
         #Show a plot of the generated distribution
         mainPanel(
             plotOutput("distPlot"),
             downloadButton("downloadData", "Download data"),
             downloadButton("downloadPlot", "Download plot pdf")
         )
+    ),
+    p("Notes:",
+      tags$ul(
+          tags$li(
+              "Report date may not reflect infection or symptom onset date and could be impacted by variations in test availability, test seeking behaviors, and reporting lag time."
+          ),
+          tags$li(
+              "Cases are assigned to location based on residence and may not reflect where transmission occurred."
+          )
+      )),
+    tags$footer(align = "center",
+        "Concept and design by ",
+        tags$a(href = "https://publichealth.vt.edu/people/facultystaff/rachelsilverman.html", "Rachel A. Silverman"),
+        tags$br(),
+        "Code and design by ",
+        tags$a(href = "https://www.bse.vt.edu/about/people/faculty/clay-wright.html", "R. Clay Wright"),
+        tags$br(),
+        fa(name = "github", fill = "black"),
+        tags$a(href = "https://github.com/wrightrc/VDH-COVID-data",
+               "View the source code and make suggestions"),
+        tags$br(),
+        HTML('This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a><br /><a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a>')
     )
 )
+
+
 
 #### Server ####
 server <- function(input, output) {
@@ -169,7 +199,7 @@ server <- function(input, output) {
                 filter(wday(`Report Date`) == wday(today()))
         }
         else {
-    #### Sum total ####
+            #### Sum total ####
             ##### 1 Group ####
             if (input$groups == 1) {
                 data_plot <- data_plot %>%
@@ -272,32 +302,39 @@ server <- function(input, output) {
         }
     })
     
-#### Download ####
+    #### Download ####
     output$downloadData <- downloadHandler(
         filename = "VDH-Covid-data-subset.csv",
         content = function(file) {
             if (input$sum == "Sum total") {
                 write.csv(
                     filtered_data() %>%
-                        pivot_wider(names_from = group,
-                                    values_from = `New Weekly Cases`, 
-                                    values_fill = 0, 
-                                    names_prefix = "New Weekly Cases in "),
+                        pivot_wider(
+                            names_from = group,
+                            values_from = `New Weekly Cases`,
+                            values_fill = 0,
+                            names_prefix = "New Weekly Cases in "
+                        ),
                     file,
                     row.names = FALSE
                 )
             } else
                 write.csv(
                     filtered_data() %>%
-                        select(-c(`Number of Hospitalizations`, 
-                                  `New Daily Cases`, 
-                                  `Number of Cases`, 
-                                  `Number of Deaths`)) %>%
+                        select(
+                            -c(
+                                `Number of Hospitalizations`,
+                                `New Daily Cases`,
+                                `Number of Cases`,
+                                `Number of Deaths`
+                            )
+                        ) %>%
                         pivot_wider(
                             names_from = c(`Health District`, `Age Group`),
                             values_from = `New Weekly Cases`,
-                            names_glue = "New Weekly Cases in {`Health District`} & {`Age Group`}", 
-                            values_fill = 0),
+                            names_glue = "New Weekly Cases in {`Health District`} & {`Age Group`}",
+                            values_fill = 0
+                        ),
                     file,
                     row.names = FALSE
                 )
@@ -306,7 +343,7 @@ server <- function(input, output) {
     #### Plot ####
     distPlot <- reactive({
         if (input$sum != "Sum total") {
-            p <-ggplot(
+            p <- ggplot(
                 data = filtered_data(),
                 mapping = aes(
                     x = `Report Date`,
@@ -316,12 +353,11 @@ server <- function(input, output) {
                     group = interaction(`Age Group`,
                                         `Health District`)
                 )
-            ) 
+            )
             
         } else {
-
-# Formatting --------------------------------------------------------------
-
+            # Formatting --------------------------------------------------------------
+            
             
             p <- ggplot(
                 data = filtered_data(),
@@ -331,15 +367,16 @@ server <- function(input, output) {
                     color = group,
                     group = group
                 )
-            ) 
+            )
         }
-        p + 
+        p +
             geom_line(alpha = 0.7, size = 2) +
             scale_color_brewer(palette = "Paired") +
             scale_x_date(date_breaks = "months", date_labels = "%b %y") +
             expand_limits(y = 0) +
-            theme_excel_new(base_size = 16) + 
-            theme(axis.title.x = element_text(), axis.title.y = element_text())
+            theme_excel_new(base_size = 16) +
+            theme(axis.title.x = element_text(),
+                  axis.title.y = element_text())
         
     })
     
