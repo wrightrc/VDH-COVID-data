@@ -73,7 +73,7 @@ ui <- fluidPage(
                 condition = "input.sum == `Sum total`",
                 numericInput(
                     inputId = "groups",
-                    label = "Number of groups to define",
+                    label = "Number of groups to define (groups must be unique at this time)",
                     value = 1,
                     min = 1,
                     max = 3
