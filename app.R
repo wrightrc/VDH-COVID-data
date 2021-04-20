@@ -206,7 +206,7 @@ server <- function(input, output) {
             data_plot <- data_plot %>%
                 filter(`Health District` %in% input$HealthDist) %>%
                 filter(`Age Group` %in% input$AgeGroup) %>%
-                filter(wday(`Report Date`) == wday(max(`Report Date`)))
+                filter(wday(`Report Date`) == wday(today()))
         }
         else {
             #### Sum total ####
