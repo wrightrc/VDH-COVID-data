@@ -26,6 +26,13 @@ data$`Health District` <- replace(
     values =  "Blue Ridge"
 )
 
+data$`Age Group` <- replace(
+  x = data$`Age Group`,
+  list = which(data$`Age Group` == "19-Oct"),
+  values =  "10-19"
+)
+
+
 data <- data %>%
     mutate(`Report Date` = mdy(`Report Date`)) %>%
     arrange(`Report Date`) %>%
@@ -200,13 +207,13 @@ server <- function(input, output) {
         data_plot <- data %>%
             filter(`Report Date` %within%
                        interval(input$DateRange[[1]],
-                                input$DateRange[[2]]))
+                                input$DateRange[[2]])) %>%
+          filter(wday(`Report Date`) == wday(max(`Report Date`)))
         ##### Plot Individual ####
         if (input$sum != "Sum total") {
             data_plot <- data_plot %>%
                 filter(`Health District` %in% input$HealthDist) %>%
-                filter(`Age Group` %in% input$AgeGroup) %>%
-                filter(wday(`Report Date`) == wday(today()))
+                filter(`Age Group` %in% input$AgeGroup) 
         }
         else {
             #### Sum total ####
