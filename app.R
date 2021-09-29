@@ -32,12 +32,27 @@ data$`Age Group` <- replace(
   values =  "10-19"
 )
 
+data$`Age Group` <- replace(
+  x = data$`Age Group`,
+  list = which(data$`Age Group` == "Missing" & data$`Age Group Type`== "Case Age Group" ),
+  values =  "Missing Case Age Group"
+)
+
+data$`Age Group` <- replace(
+  x = data$`Age Group`,
+  list = which(data$`Age Group` == "Missing" & data$`Age Group Type`== "Vaccine Age Group" ),
+  values =  "Missing Vaccine Age Group"
+)
 
 data <- data %>%
     mutate(`Report Date` = mdy(`Report Date`)) %>%
     arrange(`Report Date`) %>%
     filter(`Report Date` >= mdy("04-30-2020")) %>%
     filter(!is.na(`Health District`)) %>%
+      arrange(`Health District`) %>%
+      arrange(`Age Group Type`) %>%
+      mutate(`Age Group` = fct_inorder(`Age Group`)) %>% 
+      mutate(`Age Group` = fct_relevel(`Age Group`,"5-11 Years", after = 11))%>%
     group_by(`Age Group`, `Health District`) %>%
     mutate(`New Daily Cases` = `Number of Cases` -
                lag(`Number of Cases`,
@@ -98,9 +113,9 @@ ui <- fluidPage(
                 selectInput(
                     inputId = "AgeGroup1",
                     label = "Age Groups in Group 1",
-                    choices = unique(data$`Age Group`),
+                    choices = levels(data$`Age Group`),
                     multiple = TRUE,
-                    unique(data$`Age Group`)
+                    levels(data$`Age Group`)
                 ),
                 selectInput(
                     inputId = "HealthDist1",
@@ -114,9 +129,9 @@ ui <- fluidPage(
                     selectInput(
                         inputId = "AgeGroup2",
                         label = "Age Groups in Group 2",
-                        choices = unique(data$`Age Group`),
+                        choices = levels(data$`Age Group`),
                         multiple = TRUE,
-                        unique(data$`Age Group`)
+                        levels(data$`Age Group`)
                     ),
                     selectInput(
                         inputId = "HealthDist2",
@@ -130,9 +145,9 @@ ui <- fluidPage(
                         selectInput(
                             inputId = "AgeGroup3",
                             label = "Age Groups in Group 3",
-                            choices = unique(data$`Age Group`),
+                            choices = levels(data$`Age Group`),
                             multiple = TRUE,
-                            unique(data$`Age Group`)
+                            levels(data$`Age Group`)
                         ),
                         selectInput(
                             inputId = "HealthDist3",
@@ -150,9 +165,9 @@ ui <- fluidPage(
                 selectInput(
                     inputId = "AgeGroup",
                     label = "Age Group",
-                    choices = unique(data$`Age Group`),
+                    choices = levels(data$`Age Group`),
                     multiple = TRUE,
-                    unique(data$`Age Group`)
+                    levels(data$`Age Group`)
                 ),
                 selectInput(
                     inputId = "HealthDist",
