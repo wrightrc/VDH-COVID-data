@@ -1,0 +1,13 @@
+name: VDH-COVID-data
+title: VDH-COVID-data
+username:
+account: rsilverman
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 4742506
+bundleId: 5077270
+url: https://rsilverman.shinyapps.io/VDH-COVID-data/
+when: 1632759777.48331
+lastSyncTime: 1632759777.48332
+asMultiple: FALSE
+asStatic: FALSE

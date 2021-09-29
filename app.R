@@ -77,6 +77,14 @@ ui <- fluidPage(
                 selected = "Plot individually",
                 inline = TRUE
             ),
+            radioButtons(
+              inputId = "type",
+              label = "Select Age Group Type:",
+              choiceValues = c("Case Age Group", "Vaccine Age Group"),
+                choiceNames = c("Case Age Group (10 years)", "Vaccine Age Group"),
+              selected = "Case Age Group",
+              inline = TRUE
+            ),
             ##### Sum total ####
             conditionalPanel(
                 condition = "input.sum == `Sum total`",
@@ -208,12 +216,14 @@ server <- function(input, output) {
             filter(`Report Date` %within%
                        interval(input$DateRange[[1]],
                                 input$DateRange[[2]])) %>%
-          filter(wday(`Report Date`) == wday(max(`Report Date`)))
+          filter(wday(`Report Date`) == wday(max(`Report Date`))) %>%
+            filter(`Age Group Type` == input$type)
+          
         ##### Plot Individual ####
         if (input$sum != "Sum total") {
             data_plot <- data_plot %>%
                 filter(`Health District` %in% input$HealthDist) %>%
-                filter(`Age Group` %in% input$AgeGroup) 
+                filter(`Age Group` %in% input$AgeGroup)
         }
         else {
             #### Sum total ####
