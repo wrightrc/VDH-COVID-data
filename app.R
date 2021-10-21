@@ -50,10 +50,36 @@ data <- data %>%
     filter(`Report Date` >= mdy("04-30-2020")) %>%
     filter(!is.na(`Health District`)) %>%
       arrange(`Health District`) %>%
-      arrange(`Age Group Type`) %>%
-      mutate(`Age Group` = fct_inorder(`Age Group`)) %>% 
-      mutate(`Age Group` = fct_relevel(`Age Group`,"5-11 Years", after = 11))%>%
-    group_by(`Age Group`, `Health District`) %>%
+      arrange(`Age Group Type`)
+      
+
+  ####(ask clay how to do this): need to combine and replace vaccine age-groups 16-17 + 18-24 for Dates prior to Oct 1, 2021. Keep separate after that date. VDH shifted a bunch from 16-17 to the 18-24 age group.
+  
+data.fix <- data %>%
+  select(-`Number of Hospitalizations`, -`Number of Deaths`) %>% 
+  filter(`Age Group`%in%c('16-17 Years','18-24 Years')) %>%
+  filter(`Report Date` < mdy("10-01-2021")) %>%
+    pivot_wider(names_from =`Age Group`, values_from = `Number of Cases`) %>% 
+      mutate(`Number of Cases` = `16-17 Years` + `18-24 Years`, 
+             `Age Group` = '16-24 Years') %>% 
+        select(-`16-17 Years`,-`18-24 Years`) 
+
+data <- data %>%
+  filter(!(`Age Group`%in%c('16-17 Years','18-24 Years') & `Report Date` < mdy("10-01-2021"))) 
+
+data <- bind_rows(data,data.fix) %>% 
+  select(-`Number of Hospitalizations`, -`Number of Deaths`) %>% 
+  arrange(`Health District`,`Report Date`,`Age Group Type`,`Age Group`) %>% 
+    mutate(`Age Group` = fct_inorder(`Age Group`)) %>% 
+    mutate(`Age Group` = fct_relevel(`Age Group`,"5-11 Years", after = 11)) %>% 
+    mutate(`Age Group` = fct_relevel(`Age Group`,"16-17 Years", after = 14)) %>% 
+    mutate(`Age Group` = fct_relevel(`Age Group`,"18-24 Years", after = 14))
+#### end fix
+  
+  
+  
+data <- data %>%
+  group_by(`Age Group`, `Health District`) %>%
     mutate(`New Daily Cases` = `Number of Cases` -
                lag(`Number of Cases`,
                    order_by = `Report Date`)) %>%
@@ -61,6 +87,12 @@ data <- data %>%
                lag(`Number of Cases`, n = 7,
                    order_by = `Report Date`)) %>%
     drop_na()
+
+
+
+
+  
+  
 
 #### UI ####
 ui <- fluidPage(
@@ -196,6 +228,9 @@ ui <- fluidPage(
           ),
           tags$li(
               "Cases are assigned to location based on residence and may not reflect where transmission occurred."
+          ),
+          tags$li(
+              "On 10/1/2021, VDH shifted data from the Vaccine Age Group 16-17 Years to the 18-24 Years. Therefor, we grouped these two groups together to create a 16-24 Years grop for dates prior to 10/1/2021. The groups are kept separate after 10/1/2021, resulting in a data gap of weekly new cases for these age groups for the first week in October."
           )
       )),
     tags$footer(
@@ -392,3 +427,16 @@ server <- function(input, output) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
+
+#make more colors:
+#color = grDevices::colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
+#n=15
+#pie(rep(1,n), col=sample(color, n))
+
+
+
+
+
+
+
