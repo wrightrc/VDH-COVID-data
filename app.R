@@ -230,6 +230,9 @@ ui <- fluidPage(
               "Cases are assigned to location based on residence and may not reflect where transmission occurred."
           ),
           tags$li(
+              "On 08/1/2021, VDH added Vaccine Age Group categories. Current settings allow for viewing age groups from only one group type at a time, depending on which Age Group Type is selected above."
+          ),
+          tags$li(
               "On 10/1/2021, VDH shifted some data from Vaccine Age Group 16-17 Years to 18-24 Years. To account for this, we added these two age groups together to create a 16-24 Years group for the time period prior to this shift. The groups are kept separate after this data shift."
           )
       )),

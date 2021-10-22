@@ -5,9 +5,9 @@ account: rsilverman
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 4742506
-bundleId: 5164207
+bundleId: 5166939
 url: https://rsilverman.shinyapps.io/VDH-COVID-data/
-when: 1634852901.8599
-lastSyncTime: 1634852901.85991
+when: 1634912252.88682
+lastSyncTime: 1634912252.88683
 asMultiple: FALSE
 asStatic: FALSE
