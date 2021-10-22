@@ -53,12 +53,12 @@ data <- data %>%
       arrange(`Age Group Type`)
       
 
-  ####(ask clay how to do this): need to combine and replace vaccine age-groups 16-17 + 18-24 for Dates prior to Oct 1, 2021. Keep separate after that date. VDH shifted a bunch from 16-17 to the 18-24 age group.
-  
+####(ask clay how to do this): need to combine and replace vaccine age-groups 16-17 + 18-24 for Dates prior to Oct 1, 2021. Keep separate after that date. VDH shifted a bunch from 16-17 to the 18-24 age group.
+#make dataset to combine pre Oct, 2021 data for those age groups that VDH shifted cases across
 data.fix <- data %>%
   select(-`Number of Hospitalizations`, -`Number of Deaths`) %>% 
   filter(`Age Group`%in%c('16-17 Years','18-24 Years')) %>%
-  filter(`Report Date` < mdy("10-01-2021")) %>%
+  filter(`Report Date` < mdy("10-15-2021")) %>%
     pivot_wider(names_from =`Age Group`, values_from = `Number of Cases`) %>% 
       mutate(`Number of Cases` = `16-17 Years` + `18-24 Years`, 
              `Age Group` = '16-24 Years') %>% 
@@ -230,7 +230,7 @@ ui <- fluidPage(
               "Cases are assigned to location based on residence and may not reflect where transmission occurred."
           ),
           tags$li(
-              "On 10/1/2021, VDH shifted data from the Vaccine Age Group 16-17 Years to the 18-24 Years. Therefor, we grouped these two groups together to create a 16-24 Years grop for dates prior to 10/1/2021. The groups are kept separate after 10/1/2021, resulting in a data gap of weekly new cases for these age groups for the first week in October."
+              "On 10/1/2021, VDH shifted some data from Vaccine Age Group 16-17 Years to 18-24 Years. To account for this, we added these two age groups together to create a 16-24 Years group for the time period prior to this shift. The groups are kept separate after this data shift."
           )
       )),
     tags$footer(
