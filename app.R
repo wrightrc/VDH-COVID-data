@@ -99,7 +99,7 @@ ui <- fluidPage(
     # Application title
     titlePanel("Virginia Department of Health COVID-19 Surveillance Data"),
     helpText(
-        "Using the most recently available data from VDH.",
+        "Using the most recent publicly available data from VDH.",
         tags$a(href = "https://www.vdh.virginia.gov/coronavirus/",
                "Raw data is available here."),
         p(
