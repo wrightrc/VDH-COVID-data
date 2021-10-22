@@ -58,7 +58,7 @@ data <- data %>%
 data.fix <- data %>%
   select(-`Number of Hospitalizations`, -`Number of Deaths`) %>% 
   filter(`Age Group`%in%c('16-17 Years','18-24 Years')) %>%
-  filter(`Report Date` < mdy("10-15-2021")) %>%
+  filter(`Report Date` < mdy("10-8-2021")) %>%
     pivot_wider(names_from =`Age Group`, values_from = `Number of Cases`) %>% 
       mutate(`Number of Cases` = `16-17 Years` + `18-24 Years`, 
              `Age Group` = '16-24 Years') %>% 
@@ -73,7 +73,7 @@ data <- bind_rows(data,data.fix) %>%
     mutate(`Age Group` = fct_inorder(`Age Group`)) %>% 
     mutate(`Age Group` = fct_relevel(`Age Group`,"5-11 Years", after = 11)) %>% 
     mutate(`Age Group` = fct_relevel(`Age Group`,"16-17 Years", after = 14)) %>% 
-    mutate(`Age Group` = fct_relevel(`Age Group`,"18-24 Years", after = 14))
+    mutate(`Age Group` = fct_relevel(`Age Group`,"18-24 Years", after = 15))
 #### end fix
   
   
