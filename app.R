@@ -360,11 +360,9 @@ server <- function(input, output) {
                     filtered_data() %>%
                         select(
                             -c(
-                                `Number of Hospitalizations`,
                                 `New Daily Cases`,
-                                `Number of Cases`,
-                                `Number of Deaths`
-                            )
+                                `Number of Cases`
+                                                            )
                         ) %>%
                         pivot_wider(
                             names_from = c(`Health District`, `Age Group`),
